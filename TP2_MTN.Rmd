@@ -1,0 +1,329 @@
+---
+title: "TP2"
+author: "Mame Thierno NDIAYE"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    code_folding: show
+    keep_md: true
+    theme: cerulean
+    highlight: tango
+  pdf_document:
+    toc: true
+    toc_depth: '3'
+  word_document:
+    toc: true
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+  #results = "hide"
+)
+```
+
+
+```{r remove environment variables}
+
+rm(list = ls())
+```
+
+```{r}
+#install.packages("kableExtra")
+library(tidyverse)
+library(haven)
+library(here)
+library(readxl)
+library(gtsummary)
+library(ggplot2)
+```
+
+# Importation et mise en forme 
+
+```{r}
+path <- here()
+base_tp2 <- read_excel(paste0(path, "/Base TP2.xlsx"))
+
+#### Nombre de lignes
+nLigne <- nrow(base_tp2)
+print(nLigne)
+
+#### Nombre de colonnes
+nColonne<- ncol(base_tp2)
+print(nColonne)
+```
+
+# Recodage et labelisation 
+
+```{r}
+###### Labélisation des variables
+base_tp2 <- base_tp2 %>% 
+  expss::apply_labels("region" = "Région",
+                "departement" = "Département",
+                "sexe" = "Sexe",
+                "age" = "Age",
+                "sit_mat" = "Situation maritale",
+                "si_chef_men" = "Statut dans le ménage",
+                "ethnie" = "Ethnie",
+                "occupation" = "Occupation",
+                "formation" = "Formation",
+                "niveau_alphabs" = "Nveau d'alphabétisation",
+                "sup_tot" = "Quelle est la superficie totale 
+                emblavée en sésame la saison passée ? EN 
+                HECTARES",
+                "types_varietes" = "Quelles sont les variétés que 
+                vous utilisez pour la production de sésame",
+                "var_trad" = "Si variétés traditionnelles, donnez 
+                les noms",
+                "raison_var_trad" = "Pourquoi utilisez-vous les 
+                variétés traditionnelles",
+                "var_amel" = "Si variétés améliorées, laquelle 
+                utilisez-vous ?",
+                "raison_var_amel" = "Pourquoi utilisez-vous les 
+                variétés améliorées",
+                "criteres_var" = "Quels sont les critères de choix
+                des variétés se sésame ?")
+
+###### Recodage
+base_tp2 <- base_tp2 %>% 
+  dplyr::mutate(sexe = dplyr::recode(sexe,
+                                     "1" = "Homme",
+                                     "2" = "Femme"))%>% 
+  dplyr::mutate(sit_mat = dplyr::recode(sit_mat,
+                                     "1" = "Marié (e)",
+                                     "3" = "Veuf (ve)",
+                                     "4" = "Divorcé (e)",
+                                     "5" = "Séparé (e)",
+                                     "6" = "Célibataire"))%>% 
+ dplyr::mutate(si_chef_men = dplyr::recode(si_chef_men,
+                                     "1" = "femme du chef de ménage",
+                                     "2" = "chef de ménage",
+                                     "3" = "fils-fille du chef de ménage",
+                                     "99" = "Autres")) %>% 
+ dplyr::mutate(ethnie = dplyr::recode(ethnie,
+                                     "1" = "Wolof",
+                                     "2" = "Pulaar/Toucouleur",
+                                     "3" = "Sérère",
+                                     "4" = "Mandika/Bambara",
+                                     "5" = "Soninké",
+                                     "6" = "Diola",
+                                     "7" = "Manjack",
+                                     "8"= "Bainouk",
+                                     "9" = "Maures",
+                                     "10" = "Balante",
+                                     "77" = "Autre")) %>% 
+  dplyr::mutate(occupation = dplyr::recode(occupation,
+                                     "1" = "Agriculture, Elevage, Sylviculture, Pêche",
+                                     "2" = "Activités extractives",
+                                     "3" = "Activités de fabrication (Artisanat)",
+                                     "4" = "Activité de transformation",
+                                     "5" = "Production et distribution d'éléctricité et de gaz",
+                                     "6" = "Production et distribution d'eau, assainissement, traitement des déchets et dépollution")) %>% 
+  dplyr::mutate(formation = dplyr::recode(formation,
+                                     "1" = "Non scolarisé",
+                                     "2" = "Élémentaires",
+                                     "3" = "Moyen",
+                                     "4" = "Secondaire",
+                                     "5" = "Licence",
+                                     "6" = "Master",
+                                     "7" = "Doctorat",
+                                     "99" = "Ne sait pas")) %>% 
+  dplyr::mutate(niveau_alphabs = dplyr::recode(niveau_alphabs,
+                                     "0" = "Sans niveau",
+                                     "1" = "Sais lire dans une langue",
+                                     "2" = "Sais lire et écrire dans une langue")) 
+base_tp2$types_varietes <- as.numeric(base_tp2$types_varietes)
+base_tp2$types_varietes <- labelled::labelled(base_tp2$types_varietes,
+                             c("Traditionnelles" = 1, "Améliorées" = 2))
+expss::val_lab(base_tp2$types_varietes)
+
+base_tp2$criteres_var <- as.numeric(base_tp2$criteres_var)
+base_tp2$criteres_var <- labelled::labelled(base_tp2$criteres_var,
+                             c("rendements élevés" = 1, 
+                               "taille des graines" = 2,
+                               "résistantes aux maladies/ravageurs" = 3,
+                               "Tolérantes aux sécheresses" = 4,
+                               "Tolérantes aux inondations" = 5,
+                               "Faibles quantités d'intrants" = 6,
+                               "Faibles charge de travail" = 7,
+                               "facile à transformer" = 8,
+                               "Haute teneur en huile" = 9,
+                               "Haut rendement après transformation" = 10,
+                               "Demande sur le marché" = 11,
+                               "Bon goût" = 12,
+                               "Belle couleur" = 13,
+                               "Haut rendement en fourrages" = 14,
+                               "Qualité du fourrage" = 15,
+                               "autres à spécifier" = 16))
+expss::val_lab(base_tp2$criteres_var)
+```
+
+# Analyses descriptives 
+##Statistiques univariées
+
+```{r}
+univarie <- function(data, variable) {
+  obj <- data[[variable]]
+
+  if (is.numeric(obj)) {
+    # Statistiques descriptives
+    summary_table <- data %>%
+      select({{ variable }}) %>%
+      tbl_summary(
+        type = {{ variable }} ~ "continuous2",
+        statistic = list({{ variable }} ~ c("{mean}", "{sd}", "{median}", "{min}, {max}", "{p25}; {p75}", "{N_miss}; {p_miss}")),
+        digits = {{ variable }} ~ 2
+      ) %>%
+      bold_labels() %>%
+      modify_header(label = "**Variable**")
+    # Histogramme
+    hist_plot <- ggplot(data, aes(x = !!rlang::sym(variable))) +
+      geom_histogram(color = "black", fill = "orange") +
+      labs(title = "Histogramme", x = variable, y = "Fréquence")
+
+    # Boîte à moustaches
+    box_plot <- ggplot(data, aes(y = !!rlang::sym(variable))) +
+      geom_boxplot(fill = "blue") +
+      labs(title = "Boîte à moustaches", x = "", y = "Quantiles")
+    print(hist_plot)
+    print(box_plot)
+    summary_table
+  } else if (!is.numeric(obj)) {
+    # Statistiques descriptives
+    summary_table <- data %>%
+      select({{ variable }}) %>%
+      tbl_summary(
+        statistic = list({{ variable }} ~ "{n} ({p}%)"),
+        digits = {{ variable }} ~ 2
+      ) %>%
+      bold_labels() %>%
+      modify_header(label = "**Variable**")
+     
+    # Diagramme en barres
+    bar_plot <- ggplot(data, aes(x = !!rlang::sym(variable))) +
+      geom_bar(fill = "orange") +
+      labs(title = "Diagramme en barres", x = variable, y = "Fréquence")
+    print(bar_plot)
+    summary_table
+  }
+}
+
+univarie(base_tp2, "sexe")
+univarie(base_tp2, "age")
+univarie(base_tp2, "ethnie")
+univarie(base_tp2, "formation")
+univarie(base_tp2, "occupation")
+univarie(base_tp2, "types_varietes_1")
+univarie(base_tp2, "types_varietes_2")
+base_tp2 %>% 
+      gtsummary::tbl_cross(
+        col = types_varietes_1,
+        row = types_varietes_2,
+        percent = "n"
+      )
+
+
+```
+
+L'analyse des données révèle une prédominance masculine dans l'échantillon étudié, avec 66,04% d'hommes recensés. Tous les individus appartiennent à l'état matrimonial "marié", affichant une moyenne d'âge de 48 ans avec une variabilité de 13 ans. La communauté sérère constitue la majorité, représentant 24,53% de l'échantillon, tandis que les Wolofs, Mandika/Bambara et Pulaar/Toucouleur sont également significativement représentés, avec des pourcentages respectifs de 18,87%, 15,09% et 13,21%.
+
+Pour ce qui est du niveau d'éducation de cette population, une majorité écrasante (56,60%) n'a pas suivi de cursus scolaire. Parmi ceux qui ont été scolarisés, la plupart n'ont pas dépassé le niveau élémentaire, totalisant 18,87% de l'échantillon.
+
+En ce qui concerne les activités principales de cette population, l'agriculture, l'élevage, la sylviculture et la pêche sont les plus répandues et dominantes.
+
+Concernant la production de sésame, presque tous les individus de l'échantillon (90,56%) utilisent exclusivement la variété traditionnelle, tandis que 7,54% ont recours uniquement à la variété améliorée. Seulement un individu de l'échantillon combine les deux variétés dans sa production.
+
+##Statistiques bivariées
+
+```{r}
+###### Fonction pour sortir les stats univariées #######
+
+bivarie <- function(data, var_1, var_2 ){
+  obj_1 <- data[[var_1]]
+  obj_2 <- data[[var_2]]
+  
+  #### Deux variables quantitatives ########
+  if ((is.numeric(obj_1)) && (is.numeric(obj_2))){
+    ##### Tests de corrélation #####
+    m <- stats::lm(as.formula(paste(var_1, "~", var_2)), data = data)
+    test <- m %>%  
+      gtsummary::tbl_regression() %>% #des résultats de la régression linéaire
+      gtsummary::add_glance_source_note() %>%  #stats en notes du tableau
+      modify_header(label = "**Variable**")
+  ##### Nuage de points ######
+   graph <- ggplot2::ggplot(data) +
+    aes(x = !!rlang::sym(var_1), y = !!rlang::sym(var_2)) +
+    geom_smooth(method="lm") +  # Droite de regréssion
+    geom_point(colour = "blue", alpha = .25) +
+    ggtitle("Nuage de points")+
+    theme_light()
+    print(graph)
+    test
+  }
+
+    #### Variable quantitative et qualitative ########
+  if ((is.numeric(obj_1)) && (!is.numeric(obj_2))){
+  ##### tableau statistique ######
+   tab <- data %>% 
+      tbl_summary(
+        include = var_1,
+        by = var_2,
+        type = var_1 ~ "continuous2",
+        statistic = list(var_1 ~ c("{N_nonmiss}; {p_miss}", 
+                            "{mean} ({sd})", "{median}","{p25}; {p75}")),
+        digits = var_1 ~ 2
+      ) %>% 
+    gtsummary::add_p() %>%  #Ajouter p_value 
+    modify_header(label = "**Variable**") 
+   ##### Boîtes à moustaches ######
+    graph <- ggplot2::ggplot(data) +
+      aes(x = !!rlang::sym(var_2), y = !!rlang::sym(var_1)) +
+      geom_boxplot(fill = "lightblue") +
+      ggtitle("Boxplot")+
+      theme_light()
+    
+    print(graph)
+    tab
+  }
+  if (!is.numeric(obj_1) && is.numeric(obj_2)){
+    errorCondition("C'est la première variable doit être numérique")
+  }
+  
+  #### Deux variables qualitatives ########
+  if (!is.numeric(obj_1) && !is.numeric(obj_2)){
+  ##### tableau statistique ######
+   tab <- data %>% 
+      gtsummary::tbl_cross(
+        col = var_1,
+        row = var_2,
+        percent = "cell"
+      ) %>% 
+    gtsummary::add_p(source_note = TRUE)   #Ajouter p_value
+ 
+  ##### Graphes ######
+    graph <- ggplot(data) +
+     aes(x = !!rlang::sym(var_1), fill = !!rlang::sym(var_2)) +
+     geom_bar(position = "dodge") +
+     scale_fill_hue(direction = 1) +
+     labs(y = "Fréquence", caption = "Graphique") +
+     theme_light()
+    print(graph)
+    tab
+  }
+}
+
+bivarie(base_tp2, "age", "formation")
+bivarie(base_tp2, "sexe", "formation")
+chisq.test(base_tp2$age, base_tp2$formation)
+
+```
+
+Les résultats révèlent une homogénéité relative de la moyenne d'âge parmi les différents niveaux d'éducation, avec une moyenne avoisinant la cinquantaine pour la plupart. Cela suggère une relation indépendante entre l'âge et le niveau d'éducation. Ce constat est confirmé par une p-value de 0,2.
+La répartition du niveau d'éducation selon le sexe montre également une indépendance entre les deux variables. Une p-value de 0,7 confirme ce résultat.
