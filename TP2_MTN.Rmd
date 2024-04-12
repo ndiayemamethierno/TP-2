@@ -89,7 +89,31 @@ base_tp2 <- base_tp2 %>%
                 "raison_var_amel" = "Pourquoi utilisez-vous les 
                 variétés améliorées",
                 "criteres_var" = "Quels sont les critères de choix
-                des variétés se sésame ?")
+                des variétés se sésame ?",
+                "types_varietes_1" = "Traditionnelles",
+                "types_varietes_2" = "Améliorées")
+base_tp2 <- base_tp2 %>%
+     expss::apply_labels("criteres_var_1" = "rendements élevés",
+                   "criteres_var_2" = "taille des graines",                            "criteres_var_3" = "résistantes aux 
+                         maladies/ravageurs",
+                   "criteres_var_4" = "Tolérantes aux 
+                         sécheresses",
+                   "criteres_var_5" = "Tolérantes aux inondations",
+                   "criteres_var_6" = "Faibles quantités 
+                   d'intrants",
+                   "criteres_var_7" = "Faibles charge de travail",
+                   "criteres_var_8" = "facile à transformer",
+                   "criteres_var_9" = "Haute teneur en huile",
+                   "criteres_var_10" = "Haut rendement après 
+                   transformation",
+                   "criteres_var_11" = "Demande sur le marché",
+                   "criteres_var_12" = "Bon goût",
+                   "criteres_var_13" = "Belle couleur",
+                   "criteres_var_14" = "Haut rendement en 
+                   fourrages",
+                   "criteres_var_15" = "Qualité du fourrage",
+                   "criteres_var_16" = "autres à spécifier")
+
 
 ###### Recodage
 base_tp2 <- base_tp2 %>% 
@@ -139,30 +163,20 @@ base_tp2 <- base_tp2 %>%
                                      "0" = "Sans niveau",
                                      "1" = "Sais lire dans une langue",
                                      "2" = "Sais lire et écrire dans une langue")) 
-base_tp2$types_varietes <- as.numeric(base_tp2$types_varietes)
-base_tp2$types_varietes <- labelled::labelled(base_tp2$types_varietes,
-                             c("Traditionnelles" = 1, "Améliorées" = 2))
-expss::val_lab(base_tp2$types_varietes)
-
-base_tp2$criteres_var <- as.numeric(base_tp2$criteres_var)
-base_tp2$criteres_var <- labelled::labelled(base_tp2$criteres_var,
-                             c("rendements élevés" = 1, 
-                               "taille des graines" = 2,
-                               "résistantes aux maladies/ravageurs" = 3,
-                               "Tolérantes aux sécheresses" = 4,
-                               "Tolérantes aux inondations" = 5,
-                               "Faibles quantités d'intrants" = 6,
-                               "Faibles charge de travail" = 7,
-                               "facile à transformer" = 8,
-                               "Haute teneur en huile" = 9,
-                               "Haut rendement après transformation" = 10,
-                               "Demande sur le marché" = 11,
-                               "Bon goût" = 12,
-                               "Belle couleur" = 13,
-                               "Haut rendement en fourrages" = 14,
-                               "Qualité du fourrage" = 15,
-                               "autres à spécifier" = 16))
-expss::val_lab(base_tp2$criteres_var)
+base_tp2 <- base_tp2 %>%
+  dplyr::mutate(types_varietes_1=dplyr::recode(types_varietes_1,
+                                          "0" = "Non",
+                                          "1"= "Oui"))
+base_tp2 <- base_tp2 %>%
+  dplyr::mutate(types_varietes_2=dplyr::recode(types_varietes_2,
+                                          "0" = "Non",
+                                          "1" = "Oui"))
+CritereVar <- base_tp2 %>% 
+  dplyr::select(gtsummary::starts_with("criteres_var_")) %>% names()
+base_tp2 <- base_tp2 %>%
+  dplyr::mutate(across(CritereVar, ~recode(.,
+                                          "0" = "Non",   
+                                          "1"= "Oui")))
 ```
 
 # Analyses descriptives 
@@ -327,3 +341,4 @@ chisq.test(base_tp2$age, base_tp2$formation)
 
 Les résultats révèlent une homogénéité relative de la moyenne d'âge parmi les différents niveaux d'éducation, avec une moyenne avoisinant la cinquantaine pour la plupart. Cela suggère une relation indépendante entre l'âge et le niveau d'éducation. Ce constat est confirmé par une p-value de 0,2.
 La répartition du niveau d'éducation selon le sexe montre également une indépendance entre les deux variables. Une p-value de 0,7 confirme ce résultat.
+
